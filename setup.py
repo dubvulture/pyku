@@ -12,9 +12,9 @@ setup(
     description='Utility to extract a sudoku from images',
     keywords='sudoku extract image',
     install_requires=[
-        'numpy>=1.11.1',
-        'scipy>=0.17.1',
-        'opencv>=2.4.9'
+        'numpy>=1.8.2',
+        'scipy>=0.13.3',
+        'opencv>=2.4.8'
     ],
     include_package_data=True,
     zip_safe=False

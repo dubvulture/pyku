@@ -10,22 +10,18 @@ from scipy.ndimage import labeled_comprehension as extract_feature
 from scipy.ndimage import find_objects
 from scipy.spatial.distance import cdist
 
-from pyku.digit_classifier import DigitClassifier
-from pyku.utils import *
+from .digit_classifier import DigitClassifier
+from .utils import *
 
 logging.basicConfig(stream=sys.stderr, level=logging.CRITICAL)
 
 
 class Sudoku(object):
-    """
-    Copy of pyku.Sudoku but saves images of important steps during the execution
-    """
 
-    def __init__(self, filename, folder=None, classifier=None,
+    def __init__(self, filename, classifier=None,
                  perspective=False, debug=False):
         """
         :param filename: image with sudoku
-        :param folder: folder where to save debug images
         :param classifier: digit classifier
         :param perspective: detect sudoku higly distorted by perspective or not,
             enabling it just deactivate sides length check
@@ -34,10 +30,7 @@ class Sudoku(object):
         self.filename = os.path.basename(filename)
         image = cv2.imread(filename)
         self.image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        if folder is None:
-            self.folder = FOLDER
-        else:
-            self.folder = folder
+
         if classifier is None:
             self.classifier = DigitClassifier()
         else:
@@ -45,11 +38,10 @@ class Sudoku(object):
         if debug:
             logging.getLogger().setLevel(logging.DEBUG)
         self.perspective = perspective
-        self.debug = debug
         self.counter = 0
         self.step = -1
 
-    def grab(self, label_tries=4, multiple=False):
+    def extract(self, label_tries=4, multiple=False):
         """
         Tries to extract a sudoku from a given image
         :param label_tries: number of times it tries to find a grid in the image
@@ -74,14 +66,6 @@ class Sudoku(object):
             i += 1
 
         if grid is not None:
-            logging.info(self.filename)
-            if self.debug:
-                cv2.imwrite(
-                    os.path.join(self.folder,
-                                 'warped/' + self.filename[:-4]
-                                 + str(self.counter) + '.png'),
-                    grid)
-                self.counter += 1
             preds = self.extract_digits(grid)
             string = [' ']*81
             probs = 0
@@ -98,6 +82,7 @@ class Sudoku(object):
         else:
             logging.info('No grid found')
 
+        logging.info(self.filename)
         return None
 
     def extract_grid(self, image, label_tries=4):
@@ -119,14 +104,6 @@ class Sudoku(object):
 
         # Closing to fill gaps (connect grid)
         bw = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, ONES(WSIZE[self.step]))
-
-        if self.debug:
-            cv2.imwrite(
-                os.path.join(self.folder,
-                             'warped/' + self.filename[:-4]
-                             + str(self.counter) + '.png'),
-                np.hstack((sobel, bw)))
-            self.counter += 1
 
         # 8way labelling
         labeled, features = label(bw, structure=ONES(3))
@@ -171,14 +148,6 @@ class Sudoku(object):
                                           cv2.THRESH_BINARY,
                                           SSIZE / 9, 10)
 
-        if self.debug:
-            cv2.imwrite(
-                os.path.join(self.folder,
-                             'warped/' + self.filename[:-4]
-                             + str(self.counter) + '.png'),
-                np.hstack((warped, ret)))
-            self.counter += 1
-
         self.remove_artifacts(ret)
         return ret
 
@@ -200,7 +169,7 @@ class Sudoku(object):
         lines = cv2.HoughLines(grid, 1, np.pi / 180, 144)
 
         if lines is not None and np.size(lines) >= 20:
-            lines = lines[0]
+            lines = lines.reshape((lines.size/2), 2)
             # theta in [0, pi] (theta > pi => rho < 0)
             # normalise theta in [-pi, pi] and negatives rho
             lines[lines[:, 0] < 0, 1] -= np.pi
@@ -208,11 +177,13 @@ class Sudoku(object):
 
             criteria = (cv2.TERM_CRITERIA_EPS, 0, 0.01)
             # split lines into 2 groups to check whether they're perpendicular
-            density, clmap, centers = cv2.kmeans(lines[:, 1], 2, criteria,
-                                                 5, cv2.KMEANS_RANDOM_CENTERS)
-
-            if self.debug:
-                self.save_hough(lines, clmap)
+            if cv2.__version__[0] == '2':
+                density, clmap, centers = cv2.kmeans(
+                        lines[:, 1], 2, criteria, 5, cv2.KMEANS_RANDOM_CENTERS)
+            else:
+                density, clmap, centers = cv2.kmeans(
+                    lines[:, 1], 2, None, criteria,
+                    5, cv2.KMEANS_RANDOM_CENTERS)
 
             # Overall variance from respective centers
             var = density / np.size(clmap)
@@ -224,39 +195,6 @@ class Sudoku(object):
         else:
             return False
 
-    def save_hough(self, lines, clmap):
-        """
-        :param lines: (rho, theta) pairs
-        :param clmap: clusters assigned to lines
-        :return: None
-        """
-        height, width = self.image.shape
-        ratio = 600. * (self.step+1) / min(height, width)
-        temp = cv2.resize(self.image, None, fx=ratio, fy=ratio,
-                          interpolation=cv2.INTER_CUBIC)
-        colors = [(0, 127, 255), (255, 0, 127)]
-
-        for i in range(0, np.size(lines) / 2):
-            rho = lines[i, 0]
-            theta = lines[i, 1]
-            color = colors[clmap[i, 0]]
-            if theta < np.pi / 4 or theta > 3 * np.pi / 4:
-                pt1 = (rho / np.cos(theta), 0)
-                pt2 = (rho - height * np.sin(theta) / np.cos(theta), height)
-            else:
-                pt1 = (0, rho / np.sin(theta))
-                pt2 = (width, (rho - width * np.cos(theta)) / np.sin(theta))
-            pt1 = (int(pt1[0]), int(pt1[1]))
-            pt2 = (int(pt2[0]), int(pt2[1]))
-            cv2.line(temp, pt1, pt2, color, 5)
-
-        cv2.imwrite(
-            os.path.join(self.folder,
-                         'warped/' + self.filename[:-4]
-                         + str(self.counter) + '.png'),
-            temp)
-        self.counter += 1
-
     def extract_corners(self, image):
         """
         Find the 4 corners of a binary image
@@ -265,24 +203,13 @@ class Sudoku(object):
         """
         cnts, _ = cv2.findContours(image.copy(),
                                    cv2.RETR_EXTERNAL,
-                                   cv2.CHAIN_APPROX_SIMPLE)
+                                   cv2.CHAIN_APPROX_SIMPLE)[-2:]
         cnt = cnts[0]
         _, _, h, w = cv2.boundingRect(cnt)
         epsilon = min(h, w) * 0.5
         vertices = cv2.approxPolyDP(cnt, epsilon, True)
         vertices = cv2.convexHull(vertices, clockwise=True)
         vertices = self.correct_vertices(vertices)
-
-        if self.debug:
-            temp = cv2.cvtColor(image.copy(), cv2.COLOR_GRAY2BGR)
-            cv2.drawContours(temp, cnts, -1, (0, 255, 0), 10)
-            cv2.drawContours(temp, vertices, -1, (0, 0, 255), 20)
-            cv2.imwrite(
-                os.path.join(self.folder,
-                             'warped/' + self.filename[:-4]
-                             + str(self.counter) + '.png'),
-                temp)
-            self.counter += 1
 
         return vertices
 

@@ -169,7 +169,7 @@ class Sudoku(object):
         lines = cv2.HoughLines(grid, 1, np.pi / 180, 144)
 
         if lines is not None and np.size(lines) >= 20:
-            lines = lines[0]
+            lines = lines.reshape((lines.size/2), 2)
             # theta in [0, pi] (theta > pi => rho < 0)
             # normalise theta in [-pi, pi] and negatives rho
             lines[lines[:, 0] < 0, 1] -= np.pi
@@ -177,8 +177,13 @@ class Sudoku(object):
 
             criteria = (cv2.TERM_CRITERIA_EPS, 0, 0.01)
             # split lines into 2 groups to check whether they're perpendicular
-            density, clmap, centers = cv2.kmeans(lines[:, 1], 2, criteria,
-                                                 5, cv2.KMEANS_RANDOM_CENTERS)
+            if cv2.__version__[0] == '2':
+                density, clmap, centers = cv2.kmeans(
+                        lines[:, 1], 2, criteria, 5, cv2.KMEANS_RANDOM_CENTERS)
+            else:
+                density, clmap, centers = cv2.kmeans(
+                        np.reshape(lines[:, 1], (lines.size/2), 1), 2, None,
+                        criteria, 5, cv2.KMEANS_RANDOM_CENTERS)
 
             # Overall variance from respective centers
             var = density / np.size(clmap)
@@ -198,7 +203,7 @@ class Sudoku(object):
         """
         cnts, _ = cv2.findContours(image.copy(),
                                    cv2.RETR_EXTERNAL,
-                                   cv2.CHAIN_APPROX_SIMPLE)
+                                   cv2.CHAIN_APPROX_SIMPLE)[-2:]
         cnt = cnts[0]
         _, _, h, w = cv2.boundingRect(cnt)
         epsilon = min(h, w) * 0.5

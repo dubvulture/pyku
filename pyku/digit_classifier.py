@@ -29,13 +29,18 @@ class DigitClassifier(object):
             self.train_set, self.train_labels, self.model = \
                 self.create_model(train_folder)
         else:
+            if cv2.__version__[0] == '2':
+                self.model = cv2.KNearest()
+            else:
+                self.model = cv2.ml.KNearest_create()
             saved_model = KNN_DATA if saved_model is None else saved_model
-            self.model = cv2.KNearest()
             with np.load(saved_model) as data:
                 self.train_set = data['train_set']
                 self.train_labels = data['train_labels']
-                self.model.train(self.train_set, self.train_labels)
-
+                if cv2.__version__[0] == '2':
+                    self.model.train(self.train_set, self.train_labels)
+                else:
+                    self.model.train(self.train_set, cv2.ml.ROW_SAMPLE, self.train_labels)
 
     def create_model(self, train_folder):
         """
@@ -62,8 +67,12 @@ class DigitClassifier(object):
 
         digits = np.array(digits, np.float32)
         labels = np.array(labels, np.float32)
-        model = cv2.KNearest()
-        model.train(digits, labels)
+        if cv2.__version__[0] == '2':
+            model = cv2.KNearest()
+            model.train(digits, labels)
+        else:
+            model = cv2.ml.KNearest_create()
+            model.train(digits, cv2.ml.ROW_SAMPLE, labels)
         return digits, labels, model
 
     def classify(self, image):
@@ -73,7 +82,10 @@ class DigitClassifier(object):
         :param image:
         :return: array of 2 highest prob-digit tuples
         """
-        res = self.model.find_nearest(np.array([self.feature(image)]), k=11)
+        if cv2.__version__[0] == '2':
+            res = self.model.find_nearest(np.array([self.feature(image)]), k=11)
+        else:
+            res = self.model.findNearest(np.array([self.feature(image)]), k=11)
         hist = np.histogram(res[2], bins=9, range=(1, 10), normed=True)[0]
         zipped = sorted(zip(hist, np.arange(1, 10)), reverse=True)
         return np.array(zipped[:2])

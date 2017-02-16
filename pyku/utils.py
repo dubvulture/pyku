@@ -45,7 +45,7 @@ def _gen_centroids():
 CENTROIDS = _gen_centroids()
 
 KNN_DATA = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                        '../train/knn_data.npz')
+                        'train/knn_data.npz')
 
 
 def min_side(_, pos):

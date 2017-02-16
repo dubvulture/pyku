@@ -1,15 +1,16 @@
 # coding=utf-8
+import os
+
 import cv2
 import numpy as np
 
 __all__ = [
-    'FOLDER', 'WSIZE', 'CROSS', 'ONES', 'SSIZE', 'DSIZE', 'CENTROIDS',
-    'min_side', 'diagonal', 'compute_angle', 'compute_line', 'morph']
+    'FOLDER', 'CROSS', 'ONES', 'WSIZE', 'SSIZE', 'DSIZE',
+    'CENTROIDS', 'KNN_DATA', 'min_side', 'diagonal', 'compute_angle',
+    'compute_line', 'morph']
 
 FOLDER = '/home/manuel/Dropbox/Università/3° A.A/1° Sem/' \
-         'Elaborazione delle Immagini/immagini'
-
-WSIZE = [3, 5, 7]
+         'Elaborazione delle Immagini/immagini/'
 
 CROSS = np.array([[0, 1, 0],
                   [1, 1, 1],
@@ -20,14 +21,16 @@ def ONES(n):
     return np.ones((n, n), np.uint8)
 
 
+WSIZE = [3, 5, 7]
+
 # Sudoku Size (when extracting)
 SSIZE = 297
 assert((SSIZE % 9) == 0)
 
 # Digit Size (for classifier)
 # Higher values increase running time of find_nearest but decrease accuracy
-# 28 => 48% of running time, 38/44
-# 14 => 21% of running time, 38/44
+# 28 => 48% of running time
+# 14 => 21% of running time
 # (but only with NEAREST to 28 -> LINEAR to DSIZE when classifying test digits)
 # (resizing directly extracted digits to DSIZE greatly lowers accuracy)
 DSIZE = 14.0
@@ -40,6 +43,9 @@ def _gen_centroids():
     return np.dstack((y, x)).reshape((81, 2))
 
 CENTROIDS = _gen_centroids()
+
+KNN_DATA = os.path.join(os.path.abspath(os.path.dirname(__file__)),
+                        '../train/knn_data.npz')
 
 
 def min_side(_, pos):

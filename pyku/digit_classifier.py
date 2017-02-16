@@ -4,7 +4,7 @@ import os
 import cv2
 import numpy as np
 
-from .utils import FOLDER, DSIZE
+from .utils import DSIZE, KNN_DATA
 
 
 class DigitClassifier(object):
@@ -15,27 +15,38 @@ class DigitClassifier(object):
         ret = image.astype(np.float32) / 255
         return ret.ravel()
 
+    @staticmethod
+    def _save_model():
+        knn = DigitClassifier()
+        np.savez(KNN_DATA, train_set=knn.train_set, train_labels=knn.train_labels)
+
     def __init__(self,
-                 model=None,
-                 train_set=FOLDER + '/Fnt/numeric_',
+                 saved_model=None,
+                 train_folder=None,
                  feature=_feature.__func__):
         self.feature = feature
-        if model is not None:
-            self.model = model
-            self.train_set = None
+        if train_folder is not None:
+            self.train_set, self.train_labels, self.model = \
+                self.create_model(train_folder)
         else:
-            self.train_set = train_set
-            self.model = self.create_model()
+            saved_model = KNN_DATA if saved_model is None else saved_model
+            self.model = cv2.KNearest()
+            with np.load(saved_model) as data:
+                self.train_set = data['train_set']
+                self.train_labels = data['train_labels']
+                self.model.train(self.train_set, self.train_labels)
 
-    def create_model(self):
+
+    def create_model(self, train_folder):
         """
-        Return a KNN classifier trained on self.train_set
-        :return: KNN trained classifier
+        Return the training set, its labels and the trained model
+        :param train_folder: folder where to retrieve data
+        :return: (train_set, train_labels, trained_model)
         """
         digits = []
         labels = []
         for n in range(1, 10):
-            folder = self.train_set + str(n)
+            folder = train_folder + str(n)
             samples = [pic for pic in os.listdir(folder)
                        if os.path.isfile(os.path.join(folder, pic))]
 
@@ -53,7 +64,7 @@ class DigitClassifier(object):
         labels = np.array(labels, np.float32)
         model = cv2.KNearest()
         model.train(digits, labels)
-        return model
+        return digits, labels, model
 
     def classify(self, image):
         """

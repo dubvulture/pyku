@@ -14,7 +14,7 @@ setup(
     install_requires=[
         'numpy>=1.11.1',
         'scipy>=0.17.1',
-        'opencv>=2.4.9.1'
+        'opencv>=2.4.9'
     ],
     include_package_data=True,
     zip_safe=False

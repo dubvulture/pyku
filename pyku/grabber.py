@@ -18,11 +18,10 @@ logging.basicConfig(stream=sys.stderr, level=logging.CRITICAL)
 
 class Sudoku(object):
 
-    def __init__(self, filename, folder=None, classifier=None,
+    def __init__(self, filename, classifier=None,
                  perspective=False, debug=False):
         """
         :param filename: image with sudoku
-        :param folder: folder where to save debug images
         :param classifier: digit classifier
         :param perspective: detect sudoku higly distorted by perspective or not,
             enabling it just deactivate sides length check
@@ -31,10 +30,7 @@ class Sudoku(object):
         self.filename = os.path.basename(filename)
         image = cv2.imread(filename)
         self.image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        if folder is None:
-            self.folder = FOLDER
-        else:
-            self.folder = folder
+
         if classifier is None:
             self.classifier = DigitClassifier()
         else:
@@ -45,7 +41,7 @@ class Sudoku(object):
         self.counter = 0
         self.step = -1
 
-    def grab(self, label_tries=4, multiple=False):
+    def extract(self, label_tries=4, multiple=False):
         """
         Tries to extract a sudoku from a given image
         :param label_tries: number of times it tries to find a grid in the image

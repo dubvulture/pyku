@@ -1,2 +1,2 @@
 # coding=utf-8
-from .test_basic import TestBasic
+from .sudoku_steps import Sudoku

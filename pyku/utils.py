@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 __all__ = [
-    'FOLDER', 'CROSS', 'ONES', 'WSIZE', 'SSIZE', 'DSIZE',
+    'FOLDER', 'CROSS', 'ONES', 'RSIZE', 'WSIZE', 'SSIZE', 'DSIZE',
     'CENTROIDS', 'KNN_DATA', 'min_side', 'diagonal', 'compute_angle',
     'compute_line', 'morph']
 
@@ -21,6 +21,8 @@ def ONES(n):
     return np.ones((n, n), np.uint8)
 
 
+RSIZE = [600., 1200., 1800.]
+
 WSIZE = [3, 5, 7]
 
 # Sudoku Size (when extracting)
@@ -33,7 +35,7 @@ assert((SSIZE % 9) == 0)
 # 14 => 21% of running time
 # (but only with NEAREST to 28 -> LINEAR to DSIZE when classifying test digits)
 # (resizing directly extracted digits to DSIZE greatly lowers accuracy)
-DSIZE = 14.0
+DSIZE = 14.
 assert(DSIZE <= 28)
 
 

@@ -10,15 +10,32 @@ from .utils import DSIZE, KNN_DATA
 class DigitClassifier(object):
     @staticmethod
     def _feature(image):
+        """
+        It's faster but still accurate enough with DSIZE = 14.
+        0.9983 precision and recall
+        :param image:
+        :return: raw pixels as feature vector
+        """
         image = cv2.resize(image, None, fx=DSIZE/28, fy=DSIZE/28,
                            interpolation=cv2.INTER_LINEAR)
         ret = image.astype(np.float32) / 255
         return ret.ravel()
 
     @staticmethod
-    def _save_model():
-        knn = DigitClassifier()
-        np.savez(KNN_DATA, train_set=knn.train_set, train_labels=knn.train_labels)
+    def _zoning(image):
+        """
+        It works better with DSIZE = 28
+        0.9967 precision and recall
+        :param image:
+        :return: #pixels/area ratio of each zone (7x7) as feature vector
+        """
+        zones = []
+        for i in range(0, 28, 7):
+            for j in range(0, 28, 7):
+                roi = image[i:i+7, j:j+7]
+                val = (np.sum(roi)/255) / 49.
+                zones.append(val)
+        return np.array(zones, np.float32)
 
     def __init__(self,
                  saved_model=None,
@@ -40,7 +57,8 @@ class DigitClassifier(object):
                 if cv2.__version__[0] == '2':
                     self.model.train(self.train_set, self.train_labels)
                 else:
-                    self.model.train(self.train_set, cv2.ml.ROW_SAMPLE, self.train_labels)
+                    self.model.train(self.train_set, cv2.ml.ROW_SAMPLE,
+                                     self.train_labels)
 
     def create_model(self, train_folder):
         """
@@ -89,3 +107,10 @@ class DigitClassifier(object):
         hist = np.histogram(res[2], bins=9, range=(1, 10), normed=True)[0]
         zipped = sorted(zip(hist, np.arange(1, 10)), reverse=True)
         return np.array(zipped[:2])
+
+    def save_training(self):
+        """
+        Save traning set and labels of current model
+        """
+        np.savez(KNN_DATA, train_set=self.train_set,
+                 train_labels=self.train_labels)

@@ -21,14 +21,12 @@ class Sudoku(object):
     Copy of pyku.Sudoku but saves images of important steps during the execution
     """
 
-    def __init__(self, filename, folder=None, classifier=None,
-                 perspective=False, debug=False):
+    def __init__(self, filename, folder=None, classifier=None, debug=False):
         """
         :param filename: image with sudoku
         :param folder: folder where to save debug images
         :param classifier: digit classifier
-        :param perspective: detect sudoku higly distorted by perspective or not,
-            enabling it just deactivate sides length check
+
         :param debug: print/save debug messages/images
         """
         self.filename = os.path.basename(filename)
@@ -44,28 +42,30 @@ class Sudoku(object):
             self.classifier = classifier
         if debug:
             logging.getLogger().setLevel(logging.DEBUG)
-        self.perspective = perspective
+        self.perspective = False
         self.debug = debug
         self.counter = 0
         self.step = -1
 
-    def grab(self, label_tries=4, multiple=False):
+    def extract(self, label_tries=4, perspective=False, multiple=False):
         """
         Tries to extract a sudoku from a given image
         :param label_tries: number of times it tries to find a grid in the image
+        :param perspective: detect sudoku higly distorted by perspective or not,
+            enabling it just deactivate sides length check
         :param multiple: indicates whether there is one or more sudoku to grab
         :return: string representing the sudoku or None if it fails
         """
-        h, w = self.image.shape
+        self.perspective = perspective
 
-        sizes = [600., 1200., 1800.]
+        h, w = self.image.shape
 
         i = 0
         ratio = -1
         grid = None
         while i < 3 and ratio < 1 and grid is None:
             self.step = i
-            ratio = sizes[i] / min(h, w)
+            ratio = RSIZE[i] / min(h, w)
             ratio = ratio if ratio < 1 else 1
             logging.info('%d try to resize', i)
             resized = cv2.resize(self.image, None, fx=ratio, fy=ratio,
@@ -76,12 +76,7 @@ class Sudoku(object):
         if grid is not None:
             logging.info(self.filename)
             if self.debug:
-                cv2.imwrite(
-                    os.path.join(self.folder,
-                                 'warped/' + self.filename[:-4]
-                                 + str(self.counter) + '.png'),
-                    grid)
-                self.counter += 1
+                self.save2image(grid)
             preds = self.extract_digits(grid)
             string = [' ']*81
             probs = 0
@@ -121,12 +116,7 @@ class Sudoku(object):
         bw = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, ONES(WSIZE[self.step]))
 
         if self.debug:
-            cv2.imwrite(
-                os.path.join(self.folder,
-                             'warped/' + self.filename[:-4]
-                             + str(self.counter) + '.png'),
-                np.hstack((sobel, bw)))
-            self.counter += 1
+            self.save2image(np.hstack((sobel, bw)))
 
         # 8way labelling
         labeled, features = label(bw, structure=ONES(3))
@@ -172,12 +162,7 @@ class Sudoku(object):
                                           SSIZE / 9, 10)
 
         if self.debug:
-            cv2.imwrite(
-                os.path.join(self.folder,
-                             'warped/' + self.filename[:-4]
-                             + str(self.counter) + '.png'),
-                np.hstack((warped, ret)))
-            self.counter += 1
+            self.save2image(np.hstack((warped, ret)))
 
         self.remove_artifacts(ret)
         return ret
@@ -255,12 +240,7 @@ class Sudoku(object):
             pt2 = (int(pt2[0]), int(pt2[1]))
             cv2.line(temp, pt1, pt2, color, 5)
 
-        cv2.imwrite(
-            os.path.join(self.folder,
-                         'warped/' + self.filename[:-4]
-                         + str(self.counter) + '.png'),
-            temp)
-        self.counter += 1
+        self.save2image(temp)
 
     def extract_corners(self, image):
         """
@@ -282,12 +262,7 @@ class Sudoku(object):
             temp = cv2.cvtColor(image.copy(), cv2.COLOR_GRAY2BGR)
             cv2.drawContours(temp, cnts, -1, (0, 255, 0), 10)
             cv2.drawContours(temp, vertices, -1, (0, 0, 255), 20)
-            cv2.imwrite(
-                os.path.join(self.folder,
-                             'warped/' + self.filename[:-4]
-                             + str(self.counter) + '.png'),
-                temp)
-            self.counter += 1
+            self.save2image(temp)
 
         return vertices
 
@@ -397,3 +372,11 @@ class Sudoku(object):
             image = np.rot90(image)
         logging.info(prob)
         return digits[np.argmax(prob)]
+
+    def save2image(self, image):
+        cv2.imwrite(
+            os.path.join(self.folder,
+                         'warped/' + self.filename[:-4]
+                         + str(self.counter) + '.png'),
+            image)
+        self.counter += 1

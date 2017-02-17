@@ -1,3 +1,0 @@
-include test/groundtruth.txt
-include train/knn_data.npz
-include examples/*

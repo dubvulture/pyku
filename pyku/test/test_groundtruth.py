@@ -45,13 +45,9 @@ def test_groundtruth(standard=True):
     # How many images
     n = 52
     for i in range(n):
-        if i == 19 or i == 1:
-            # blurrer image, OUTLIER
-            preds.append(None)
-        else:
-            pic = pics[i]
-            im = pyku.Sudoku(pic, classifier=model)
-            preds.append(im.extract(label_tries=3, debug=True))
+        pic = pics[i]
+        im = pyku.Sudoku(pic, classifier=model)
+        preds.append(im.extract(label_tries=3, debug=True))
     preds = np.array(preds)
 
     res = np.equal(groundtruth[:n], preds)
@@ -82,12 +78,15 @@ def test_groundtruth(standard=True):
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
 
-    from sklearn.metrics import precision_score, recall_score, accuracy_score
-    from sklearn.metrics import confusion_matrix
-    logging.info(confusion_matrix(y_true, y_pred))
-    logging.info('Recall: %f', recall_score(y_true, y_pred))
-    logging.info('Precision: %f', precision_score(y_true, y_pred))
-    logging.info('Accuracy: %f', accuracy_score(y_true, y_pred))
+    try:
+        from sklearn.metrics import precision_score, recall_score, accuracy_score
+        from sklearn.metrics import confusion_matrix
+        logging.info(confusion_matrix(y_true, y_pred))
+        logging.info('Recall: %f', recall_score(y_true, y_pred))
+        logging.info('Precision: %f', precision_score(y_true, y_pred))
+        logging.info('Accuracy: %f', accuracy_score(y_true, y_pred))
+    except:
+        pass
     logging.info('Wrong positions: %d', w_pos)
 
     for i in range(n):

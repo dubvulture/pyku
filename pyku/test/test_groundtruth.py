@@ -75,6 +75,8 @@ def test_groundtruth(standard=True):
                     y_pred.append(a)
                     y_true.append(b)
 
+    logging.info('Wrong positions: %d', w_pos)
+
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
 
@@ -82,20 +84,14 @@ def test_groundtruth(standard=True):
         from sklearn.metrics import precision_score, recall_score, accuracy_score
         from sklearn.metrics import confusion_matrix
         logging.info(confusion_matrix(y_true, y_pred))
-        logging.info('Recall: %f', recall_score(y_true, y_pred))
-        logging.info('Precision: %f', precision_score(y_true, y_pred))
-        logging.info('Accuracy: %f', accuracy_score(y_true, y_pred))
+        recall = recall_score(y_true, y_pred, average='macro')
+        precision = precision_score(y_true, y_pred, average='macro')
+        accuracy = accuracy_score(y_true, y_pred)
+        logging.info('Recall: %f', recall)
+        logging.info('Precision: %f', precision)
+        logging.info('Accuracy: %f', accuracy)
     except:
         pass
-    logging.info('Wrong positions: %d', w_pos)
-
-    for i in range(n):
-        if preds[i] is None:
-            logging.info('No grid found in %d.jpg', i+1)
-        elif preds[i] != groundtruth[i]:
-            logging.info('%d.jpg', i+1)
-            logging.info(preds[i])
-            logging.info(groundtruth[i])
 
 
 if __name__ == "__main__":

@@ -18,11 +18,10 @@ logging.basicConfig(stream=sys.stderr, level=logging.CRITICAL)
 
 class Sudoku(object):
 
-    def __init__(self, filename, classifier=None, debug=False):
+    def __init__(self, filename, classifier=None):
         """
         :param filename: image with sudoku
         :param classifier: digit classifier
-        :param debug: print/save debug messages/images
         """
         self.filename = os.path.basename(filename)
         image = cv2.imread(filename)
@@ -32,20 +31,21 @@ class Sudoku(object):
             self.classifier = DigitClassifier()
         else:
             self.classifier = classifier
-        if debug:
-            logging.getLogger().setLevel(logging.DEBUG)
         self.perspective = False
         self.step = -1
 
-    def extract(self, label_tries=4, perspective=False):
+    def extract(self, label_tries=3, perspective=False, debug=False):
         """
         Tries to extract a sudoku from a given image
         :param label_tries: number of times it tries to find a grid in the image
         :param perspective: detect sudoku higly distorted by perspective or not,
             enabling it just deactivate sides length check
+        :param debug: print/save debug messages/images
         :return: string representing the sudoku or None if it fails
         """
         self.perspective = perspective
+        if debug:
+            logging.getLogger().setLevel(logging.DEBUG)
 
         h, w = self.image.shape
 

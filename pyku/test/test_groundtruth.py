@@ -50,8 +50,8 @@ def test_groundtruth(standard=True):
             preds.append(None)
         else:
             pic = pics[i]
-            im = pyku.Sudoku(pic, classifier=model, debug=True)
-            preds.append(im.extract(label_tries=3))
+            im = pyku.Sudoku(pic, classifier=model)
+            preds.append(im.extract(label_tries=3, debug=True))
     preds = np.array(preds)
 
     res = np.equal(groundtruth[:n], preds)

@@ -117,6 +117,7 @@ class DigitClassifier(object):
     def save_training(self, filename):
         """
         Save traning set and labels of current model
+        :param filename: filename of new data.npz, it will be saved in 'train/'
         """
         np.savez(os.path.join(TRAIN_DATA, filename),
                  train_set=self.train_set,

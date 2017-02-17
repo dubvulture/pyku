@@ -56,7 +56,7 @@ class Sudoku(object):
             self.step = i
             ratio = RSIZE[i] / min(h, w)
             ratio = ratio if ratio < 1 else 1
-            logging.info('%d try to resize', i)
+            logging.info('%d try to resize', i+1)
             resized = cv2.resize(self.image, None, fx=ratio, fy=ratio,
                                  interpolation=cv2.INTER_CUBIC)
             grid = self.extract_grid(resized, label_tries=label_tries)

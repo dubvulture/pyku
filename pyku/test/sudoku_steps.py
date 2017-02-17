@@ -26,7 +26,6 @@ class Sudoku(object):
         :param filename: image with sudoku
         :param folder: folder where to save debug images
         :param classifier: digit classifier
-
         :param debug: print/save debug messages/images
         """
         self.filename = os.path.basename(filename)
@@ -36,6 +35,7 @@ class Sudoku(object):
             self.folder = FOLDER
         else:
             self.folder = folder
+        os.mkdir(os.path.join(self.folder, 'debug/'))
         if classifier is None:
             self.classifier = DigitClassifier()
         else:
@@ -47,13 +47,12 @@ class Sudoku(object):
         self.counter = 0
         self.step = -1
 
-    def extract(self, label_tries=4, perspective=False, multiple=False):
+    def extract(self, label_tries=4, perspective=False):
         """
         Tries to extract a sudoku from a given image
         :param label_tries: number of times it tries to find a grid in the image
         :param perspective: detect sudoku higly distorted by perspective or not,
             enabling it just deactivate sides length check
-        :param multiple: indicates whether there is one or more sudoku to grab
         :return: string representing the sudoku or None if it fails
         """
         self.perspective = perspective
@@ -376,7 +375,7 @@ class Sudoku(object):
     def save2image(self, image):
         cv2.imwrite(
             os.path.join(self.folder,
-                         'warped/' + self.filename[:-4]
+                         'debug/' + self.filename[:-4]
                          + str(self.counter) + '.png'),
             image)
         self.counter += 1

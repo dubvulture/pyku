@@ -37,11 +37,12 @@ class Sudoku(object):
         self.perspective = False
         self.step = -1
 
-    def extract(self, label_tries=4, perspective=False, multiple=False):
+    def extract(self, label_tries=4, perspective=False):
         """
         Tries to extract a sudoku from a given image
         :param label_tries: number of times it tries to find a grid in the image
-        :param multiple: indicates whether there is one or more sudoku to grab
+        :param perspective: detect sudoku higly distorted by perspective or not,
+            enabling it just deactivate sides length check
         :return: string representing the sudoku or None if it fails
         """
         self.perspective = perspective

@@ -44,9 +44,14 @@ def test_groundtruth(standard=True):
 
     # How many images
     n = 52
-    for pic in pics[:n]:
-        im = pyku.Sudoku(pic, classifier=model, debug=True)
-        preds.append(im.extract(label_tries=3))
+    for i in range(n):
+        if i == 19 or i == 1:
+            # blurrer image, OUTLIER
+            preds.append(None)
+        else:
+            pic = pics[i]
+            im = pyku.Sudoku(pic, classifier=model, debug=True)
+            preds.append(im.extract(label_tries=3))
     preds = np.array(preds)
 
     res = np.equal(groundtruth[:n], preds)
@@ -70,7 +75,7 @@ def test_groundtruth(standard=True):
                 # Wrong position or noise
                 if (a == 0 and b != 0) or (a != 0 and b == 0):
                     w_pos += 1
-                else:
+                elif a!=0 and b!=0:
                     y_pred.append(a)
                     y_true.append(b)
 
@@ -78,11 +83,21 @@ def test_groundtruth(standard=True):
     y_pred = np.array(y_pred)
 
     from sklearn.metrics import precision_score, recall_score, accuracy_score
+    from sklearn.metrics import confusion_matrix
+    logging.info(confusion_matrix(y_true, y_pred))
     logging.info('Recall: %f', recall_score(y_true, y_pred))
     logging.info('Precision: %f', precision_score(y_true, y_pred))
     logging.info('Accuracy: %f', accuracy_score(y_true, y_pred))
     logging.info('Wrong positions: %d', w_pos)
 
+    for i in range(n):
+        if preds[i] is None:
+            logging.info('No grid found in %d.jpg', i+1)
+        elif preds[i] != groundtruth[i]:
+            logging.info('%d.jpg', i+1)
+            logging.info(preds[i])
+            logging.info(groundtruth[i])
+
 
 if __name__ == "__main__":
-    test_groundtruth()
+    test_groundtruth(standard=False)

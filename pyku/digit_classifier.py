@@ -4,7 +4,7 @@ import os
 import cv2
 import numpy as np
 
-from .utils import DSIZE, KNN_DATA
+from .utils import DSIZE, TRAIN_DATA
 
 
 class DigitClassifier(object):
@@ -12,7 +12,7 @@ class DigitClassifier(object):
     def _feature(image):
         """
         It's faster but still accurate enough with DSIZE = 14.
-        0.9983 precision and recall
+        ~0.9983 precision and recall
         :param image:
         :return: raw pixels as feature vector
         """
@@ -25,7 +25,7 @@ class DigitClassifier(object):
     def _zoning(image):
         """
         It works better with DSIZE = 28
-        0.9967 precision and recall
+        ~0.9967 precision and recall
         :param image:
         :return: #pixels/area ratio of each zone (7x7) as feature vector
         """
@@ -41,6 +41,11 @@ class DigitClassifier(object):
                  saved_model=None,
                  train_folder=None,
                  feature=_feature.__func__):
+        """
+        :param saved_model: optional saved train set and labels as .npz
+        :param train_folder: optional custom train data to process
+        :param feature: feature function - compatible with saved_model
+        """
         self.feature = feature
         if train_folder is not None:
             self.train_set, self.train_labels, self.model = \
@@ -50,7 +55,8 @@ class DigitClassifier(object):
                 self.model = cv2.KNearest()
             else:
                 self.model = cv2.ml.KNearest_create()
-            saved_model = KNN_DATA if saved_model is None else saved_model
+            if saved_model is None:
+                saved_model = TRAIN_DATA+'raw_pixel_data.npz'
             with np.load(saved_model) as data:
                 self.train_set = data['train_set']
                 self.train_labels = data['train_labels']
@@ -108,9 +114,10 @@ class DigitClassifier(object):
         zipped = sorted(zip(hist, np.arange(1, 10)), reverse=True)
         return np.array(zipped[:2])
 
-    def save_training(self):
+    def save_training(self, filename):
         """
         Save traning set and labels of current model
         """
-        np.savez(KNN_DATA, train_set=self.train_set,
+        np.savez(os.path.join(TRAIN_DATA, filename),
+                 train_set=self.train_set,
                  train_labels=self.train_labels)

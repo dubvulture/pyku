@@ -22,7 +22,7 @@ def read_groundtruth():
     return np.array(ret)
 
 
-def test_sudoku():
+def test_groundtruth(standard=True):
     # Read all pictures
     folder = pyku.utils.FOLDER
     pics = sorted([os.path.join(folder, pic)
@@ -31,8 +31,15 @@ def test_sudoku():
     # Read groundtruth
     groundtruth = read_groundtruth()
 
-    # Train every time in case we change features
-    model = pyku.DigitClassifier(train_folder=folder + 'Fnt/numeric_')
+    if standard:
+        # Standard raw pixel data
+        model = pyku.DigitClassifier()
+    else:
+        # Zoning data
+        pyku.utils.DSIZE = 28.
+        model = pyku.DigitClassifier(
+            saved_model=pyku.utils.TRAIN_DATA + 'zoning_data.npz',
+            feature=pyku.DigitClassifier._zoning)
     preds = []
 
     # How many images
@@ -70,10 +77,12 @@ def test_sudoku():
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
 
-    from sklearn.metrics import classification_report
-    report = classification_report(y_true, y_pred)
-    logging.info(report)
+    from sklearn.metrics import precision_score, recall_score, accuracy_score
+    logging.info('Recall: %f', recall_score(y_true, y_pred))
+    logging.info('Precision: %f', precision_score(y_true, y_pred))
+    logging.info('Accuracy: %f', accuracy_score(y_true, y_pred))
+    logging.info('Wrong positions: %d', w_pos)
 
 
 if __name__ == "__main__":
-    test_sudoku()
+    test_groundtruth()

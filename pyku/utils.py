@@ -6,7 +6,7 @@ import numpy as np
 
 __all__ = [
     'FOLDER', 'CROSS', 'ONES', 'RSIZE', 'WSIZE', 'SSIZE', 'DSIZE',
-    'CENTROIDS', 'KNN_DATA', 'min_side', 'diagonal', 'compute_angle',
+    'CENTROIDS', 'TRAIN_DATA', 'min_side', 'diagonal', 'compute_angle',
     'compute_line', 'morph']
 
 FOLDER = '/home/manuel/Dropbox/Università/3° A.A/1° Sem/' \
@@ -46,8 +46,7 @@ def _gen_centroids():
 
 CENTROIDS = _gen_centroids()
 
-KNN_DATA = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                        'train/knn_data.npz')
+TRAIN_DATA =  os.path.join(os.path.abspath(os.path.dirname(__file__)), 'train/')
 
 
 def min_side(_, pos):

@@ -10,8 +10,7 @@ setup(
     keywords='sudoku extract image',
     install_requires=[
         'numpy>=1.8.2',
-        'scipy>=0.13.3',
-        'opencv>=2.4.8'
+        'scipy>=0.13.3'
         ],
     extras_require = {
       'test': ['scikit-learn']

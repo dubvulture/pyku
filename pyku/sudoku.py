@@ -45,6 +45,7 @@ class Sudoku(object):
             logging.getLogger().setLevel(logging.DEBUG)
 
         h, w = self.image.shape
+        logging.info(self.filename)
 
         i = 0
         ratio = -1
@@ -76,7 +77,6 @@ class Sudoku(object):
         else:
             logging.info('No grid found')
 
-        logging.info(self.filename)
         return None
 
     def extract_grid(self, image, label_tries=4):

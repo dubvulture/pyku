@@ -55,6 +55,7 @@ class Sudoku(object):
         self.perspective = perspective
 
         h, w = self.image.shape
+        logging.info(self.filename)
 
         i = 0
         ratio = -1

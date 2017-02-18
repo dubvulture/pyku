@@ -21,40 +21,37 @@ class Sudoku(object):
     Copy of pyku.Sudoku but saves images of important steps during the execution
     """
 
-    def __init__(self, filename, folder=None, classifier=None, debug=False):
+    def __init__(self, filename, folder=None, classifier=None):
         """
         :param filename: image with sudoku
         :param folder: folder where to save debug images
         :param classifier: digit classifier
-        :param debug: print/save debug messages/images
         """
         self.filename = os.path.basename(filename)
         image = cv2.imread(filename)
         self.image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        if folder is None:
-            self.folder = FOLDER
-        else:
-            self.folder = folder
+        self.folder = folder or FOLDER
         os.mkdir(os.path.join(self.folder, 'debug/'))
-        if classifier is None:
-            self.classifier = DigitClassifier()
-        else:
-            self.classifier = classifier
-        if debug:
-            logging.getLogger().setLevel(logging.DEBUG)
+        self.classifier = classifier or DigitClassifier()
+        # Default initial values
         self.perspective = False
-        self.debug = debug
+        self.debug = True
         self.counter = 0
         self.step = -1
 
-    def extract(self, label_tries=4, perspective=False):
+    def extract(self, label_tries=4, perspective=False, debug=True):
         """
         Tries to extract a sudoku from a given image
         :param label_tries: number of times it tries to find a grid in the image
         :param perspective: detect sudoku higly distorted by perspective or not,
             enabling it just deactivate sides length check
+        :param debug: print/save debug messages/images
         :return: string representing the sudoku or None if it fails
         """
+        if debug:
+            logging.getLogger().setLevel(logging.DEBUG)
+        else:
+            self.debug = debug
         self.perspective = perspective
 
         h, w = self.image.shape
@@ -66,7 +63,7 @@ class Sudoku(object):
             self.step = i
             ratio = RSIZE[i] / min(h, w)
             ratio = ratio if ratio < 1 else 1
-            logging.info('%d try to resize', i)
+            logging.info('%d try to resize', i+1)
             resized = cv2.resize(self.image, None, fx=ratio, fy=ratio,
                                  interpolation=cv2.INTER_CUBIC)
             grid = self.extract_grid(resized, label_tries=label_tries)
@@ -180,7 +177,6 @@ class Sudoku(object):
         #        144 - minimum number of points on the same line
         #       (but due to imperfections in the binarized image it's highly
         #        improbable to detect a 144x144 grid)
-
         lines = cv2.HoughLines(grid, 1, np.pi / 180, 144)
 
         if lines is not None and np.size(lines) >= 20:
@@ -223,6 +219,7 @@ class Sudoku(object):
         ratio = 600. * (self.step+1) / min(height, width)
         temp = cv2.resize(self.image, None, fx=ratio, fy=ratio,
                           interpolation=cv2.INTER_CUBIC)
+        temp = cv2.cvtColor(temp, cv2.COLOR_GRAY2BGR)
         colors = [(0, 127, 255), (255, 0, 127)]
 
         for i in range(0, np.size(lines) / 2):
@@ -253,13 +250,14 @@ class Sudoku(object):
         cnt = cnts[0]
         _, _, h, w = cv2.boundingRect(cnt)
         epsilon = min(h, w) * 0.5
-        vertices = cv2.approxPolyDP(cnt, epsilon, True)
-        vertices = cv2.convexHull(vertices, clockwise=True)
+        o_vertices = cv2.approxPolyDP(cnt, epsilon, True)
+        vertices = cv2.convexHull(o_vertices, clockwise=True)
         vertices = self.correct_vertices(vertices)
 
         if self.debug:
             temp = cv2.cvtColor(image.copy(), cv2.COLOR_GRAY2BGR)
             cv2.drawContours(temp, cnts, -1, (0, 255, 0), 10)
+            cv2.drawContours(temp, o_vertices, -1, (255, 0, 0), 30)
             cv2.drawContours(temp, vertices, -1, (0, 0, 255), 20)
             self.save2image(temp)
 
@@ -376,6 +374,6 @@ class Sudoku(object):
         cv2.imwrite(
             os.path.join(self.folder,
                          'debug/' + self.filename[:-4]
-                         + str(self.counter) + '.png'),
+                         + ('%02d.png' % self.counter)),
             image)
         self.counter += 1

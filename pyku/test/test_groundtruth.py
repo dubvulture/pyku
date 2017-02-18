@@ -95,4 +95,4 @@ def test_groundtruth(standard=True):
 
 
 if __name__ == "__main__":
-    test_groundtruth(standard=False)
+    test_groundtruth()

@@ -26,11 +26,8 @@ class Sudoku(object):
         self.filename = os.path.basename(filename)
         image = cv2.imread(filename)
         self.image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        if classifier is None:
-            self.classifier = DigitClassifier()
-        else:
-            self.classifier = classifier
+        self.classifier = classifier or DigitClassifier()
+        # Default initial values
         self.perspective = False
         self.step = -1
 

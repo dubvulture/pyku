@@ -173,7 +173,8 @@ class Sudoku(object):
             # split lines into 2 groups to check whether they're perpendicular
             if cv2.__version__[0] == '2':
                 density, clmap, centers = cv2.kmeans(
-                        lines[:, 1], 2, criteria, 5, cv2.KMEANS_RANDOM_CENTERS)
+                    lines[:, 1], 2, criteria,
+                    5, cv2.KMEANS_RANDOM_CENTERS)
             else:
                 density, clmap, centers = cv2.kmeans(
                     lines[:, 1], 2, None, criteria,

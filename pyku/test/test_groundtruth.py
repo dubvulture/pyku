@@ -43,7 +43,7 @@ def test_groundtruth(standard=True):
     preds = []
 
     # How many images
-    n = 52
+    n = 44
     for i in range(n):
         pic = pics[i]
         im = pyku.Sudoku(pic, classifier=model)

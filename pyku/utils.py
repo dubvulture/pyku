@@ -9,7 +9,7 @@ __all__ = [
     'CENTROIDS', 'TRAIN_DATA', 'min_side', 'diagonal', 'compute_angle',
     'compute_line', 'morph']
 
-FOLDER = '/home/manuel/Dropbox/Università/3° A.A/1° Sem/' \
+FOLDER = '/home/manuel/Dropbox/Universita/3_AA/1_Sem/' \
          'Elaborazione delle Immagini/immagini/'
 
 CROSS = np.array([[0, 1, 0],
